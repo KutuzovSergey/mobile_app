@@ -1,61 +1,59 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StatusBar, StyleSheet, FlatList } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import MainButtom from '@/components/UI/MainButton';
+import Loader from '@/components/UI/Loader';
+import { News } from '@/components/News';
+import { getDateArticles } from '@/api/userApi';
+import { ArticleType } from '@/type/typesMain';
 
 export default function HomeScreen() {
+  const [dateArticles, setDateArticles] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const url: string = 'https://promo.work-digital-guild.ru/wp-json/wp/v2/posts?per_page=3&order=desc&orderby=date'
+
+  const handlePress = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getDateArticles(url);
+      setDateArticles(result);
+    } catch (err) {
+      console.error(err);
+      setError('Ошибка при получении данных');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View
+      style={{
+        flex: 1,
+      }}>
+      <StatusBar barStyle={'light-content'}/>
+      <MainButtom title="получить продукты" disabled={!true} onPress={() => handlePress()} />
+
+      {loading && <Loader visible={loading} />}
+
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+
+      {dateArticles && (
+        <FlatList
+          data={dateArticles.data} // массив данных, которые будут отображены (допустим, список статей)
+          keyExtractor={(item: ArticleType) => item.id.toString()} // уникальный ключ для каждого элемента списка (обязательно)
+          renderItem={({ item }: { item: ArticleType }) => <News data={item} />} // как отрисовать каждый элемент
+      />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  text_main: {
+    color: '#fff'
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
